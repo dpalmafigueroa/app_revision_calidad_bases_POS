@@ -1,5 +1,5 @@
 # --- validador_app.py ---
-# Versión Atlantia 2.31 (Ajustes Geo MX, Validación Global Ciudad y Visualización Total)
+# Versión Atlantia 2.33 (Ajuste Mapeo Region MX, Validación Geo Global, Visualización Total y V3 con lastpage_Parte3)
 
 import streamlit as st
 import pandas as pd
@@ -325,7 +325,7 @@ st.markdown("### Evaluaciones Realizadas:")
 st.markdown("""
 * **Tamaño:** Compara filas y columnas.
 * **Orden de IDs:** Verifica `Unico` vs `[auth]`.
-* **Unico valor en (lastpage y lastpage2):** Revisa unicidad.
+* **Unico valor en (lastpage, lastpage2, lastpage3):** Revisa unicidad.
 * **Periodo de Campo:** Muestra fechas de `startdate`.
 * **Agrupaciones:** Rango de edad vs `[age]`, `NSE` vs `NSE2`, Geografía (Región/Ciudad). (Perú incluye validación `region2`).
 * **Origen/Proveedor:** Conteo por proveedor.
@@ -342,17 +342,10 @@ st.divider()
 
 # --- CONFIGURACIÓN DE REGLAS ---
 CLASIFICACIONES_POR_PAIS = {
-    # --- CAMBIO PANAMÁ: Guacala -> Gualaca ---
     'Panamá': {'Centro': ['Aguadulce', 'Antón', 'La Pintada', 'Natá', 'Olá', 'Penonomé','Chagres', 'Ciudad de Colón', 'Colón', 'Donoso', 'Portobelo','Resto del Distrito', 'Santa Isabel', 'La Chorrera', 'Arraiján','Capira', 'Chame', 'San Carlos'],'Metro': ['Panamá', 'San Miguelito', 'Balboa', 'Chepo', 'Chimán', 'Taboga', 'Chepigana', 'Pinogana'],'Oeste': ['Alanje', 'Barú', 'Boquerón', 'Boquete', 'Bugaba', 'David', 'Dolega', 'Gualaca', 'Remedios', 'Renacimiento', 'San Félix', 'San Lorenzo', 'Tolé', 'Bocas del Toro', 'Changuinola', 'Chiriquí Grande', 'Chitré', 'Las Minas', 'Los Pozos', 'Ocú', 'Parita', 'Pesé', 'Santa María', 'Guararé', 'Las Tablas', 'Los Santos', 'Macaracas', 'Pedasí', 'Pocrí', 'Tonosí', 'Atalaya', 'Calobre', 'Cañazas', 'La Mesa', 'Las Palmas', 'Mariato', 'Montijo', 'Río de Jesús', 'San Francisco', 'Santa Fé', 'Santiago', 'Soná']},
-    
-    # --- CAMBIO MÉXICO: Sinaloa y BCS a Occidente ---
     'México': {'Central/Bajío': ['CDMX + AM', 'Estado de México', 'Guanajuato', 'Hidalgo','Morelos', 'Puebla', 'Querétaro', 'Tlaxcala'],'Norte': ['Baja California Norte', 'Chihuahua', 'Coahuila','Durango', 'Nuevo León', 'Sonora', 'Tamaulipas'],'Occidente/Pacifico': ['Aguascalientes', 'Colima', 'Guerrero', 'Jalisco', 'Michoacan','Nayarit', 'San Luis Potosi', 'Zacatecas', 'Sinaloa', 'Baja California Sur'],'Sureste': ['Campeche', 'Chiapas', 'Oaxaca', 'Quintana Roo', 'Tabasco','Veracruz', 'Yucatán']},
-    
     'Colombia': {'Andes': ['Antioquia', 'Caldas', 'Quindio', 'Risaralda', 'Santander'],'Centro': ['Bogotá', 'Boyacá', 'Casanare', 'Cundinamarca'],'Norte': ['Atlántico', 'Bolívar', 'Cesar', 'Córdoba', 'La Guajira', 'Magdalena', 'Norte de Santader', 'Sucre'], 'Sur': ['Cauca', 'Huila', 'Meta', 'Nariño', 'Tolima', 'Valle de Cauca']},
-    
-    # --- CAMBIO ECUADOR: Tungahua -> Tungurahua ---
     'Ecuador': {'Costa': ['El Oro', 'Esmeraldas', 'Los Ríos', 'Manabí', 'Santa Elena', 'Santo Domingo de los Tsáchilas'],'Guayaquil': ['Guayas'],'Quito': ['Pichincha'],'Sierra': ['Azuay', 'Bolívar', 'Cañar', 'Carchi', 'Chimborazo', 'Cotopaxi', 'Imbabura', 'Loja', 'Tungurahua']},
-    
     'Perú': {
         'Centro': ['Ayacucho', 'Huancavelica', 'Junín', 'Ica', 'Huánuco'],
         'Lima y Callao': ['Lima', 'Callao'],
@@ -360,7 +353,6 @@ CLASIFICACIONES_POR_PAIS = {
         'Oriente': ['Amazonas', 'Loreto', 'Pasco', 'San Martin', 'Ucayali'],
         'Sur': ['Apurimac', 'Arequipa', 'Cuzco', 'Madre de Dios', 'Moquegua', 'Puno', 'Tacna']
     },
-    
     'R. Dominicana': {'Capital': ['Distrito Nacional', 'Santo Domingo'],'Region Este': ['El Seibo', 'Hato Mayor', 'La Altagracia', 'La Romana', 'Monte Plata', 'San Pedro de Macorís'],'Region norte/ Cibao': ['Dajabón', 'Duarte (San Francisco)', 'Espaillat', 'Hermanas Mirabal', 'La Vega', 'María Trinidad Sánchez', 'Monseñor Nouel', 'Montecristi', 'Puerto Plata', 'Samaná', 'Sánchez Ramírez', 'Santiago', 'Santiago Rodríguez', 'Valverde'],'Region Sur': ['Azua', 'Bahoruco', 'Barahona', 'Elías Piña', 'Independencia', 'Pedernales', 'Peravia', 'San Cristóbal', 'San José de Ocoa', 'San Juan']},
     'Honduras': {'Norte Ciudad': ['Cortés'],'Norte interior': ['Atlántida', 'Colón', 'Copán', 'Ocotepeque', 'Santa Bárbara', 'Yoro'],'Sur Ciudad': ['Francisco Morazán'],'Sur interior': ['Choluteca', 'Comayagua', 'El Paraíso', 'Intibucá', 'La Paz', 'Olancho', 'Valle']},
     'Guatemala': { 
@@ -405,13 +397,17 @@ COLUMN_MAPPING = {
         'Unico': {'Panamá': 'Unico', 'México': 'Unico', 'Colombia': 'Unico', 'Ecuador': 'Unico', 'Perú': 'Unico', 'R. Dominicana': 'Unico', 'Honduras': 'Unico', 'El Salvador': 'Unico', 'Guatemala': 'Unico', 'Colombia Minors': 'id'},
         'lastpage': {'Panamá': 'lastpage', 'México': 'lastpage', 'Colombia': 'lastpage', 'Ecuador': 'lastpage', 'Perú': 'lastpage', 'R. Dominicana': 'lastpage', 'Honduras': 'lastpage', 'El Salvador': 'lastpage', 'Guatemala': 'lastpage', 'Colombia Minors': 'lastpage'},
         'lastpage_Parte2': {'Panamá': 'lastpage_Parte2', 'México': 'lastpage_Parte2', 'Colombia': 'lastpage_Parte2', 'Ecuador': 'lastpage_Parte2', 'Perú': 'lastpage_Parte2', 'R. Dominicana': 'lastpage_Parte2', 'Honduras': 'lastpage_Parte2', 'El Salvador': 'lastpage_Parte2', 'Guatemala': 'lastpage_Parte2', 'Colombia Minors': ''},
+        
+        # --- AJUSTE V3: Agregar lastpage_Parte3 ---
+        'lastpage_Parte3': {'Panamá': 'lastpage_Parte3', 'México': 'lastpage_Parte3', 'Colombia': 'lastpage_Parte3', 'Ecuador': 'lastpage_Parte3', 'Perú': 'lastpage_Parte3', 'R. Dominicana': 'lastpage_Parte3', 'Honduras': 'lastpage_Parte3', 'El Salvador': 'lastpage_Parte3', 'Guatemala': 'lastpage_Parte3', 'Colombia Minors': ''},
+        
         'Ponderador': {'Panamá': 'Ponderador', 'México': 'Ponderador', 'Colombia': 'Ponderador', 'Ecuador': 'Ponderador', 'Perú': 'Ponderador', 'R. Dominicana': 'Ponderador', 'Honduras': 'Ponderador', 'El Salvador': 'Ponderador', 'Guatemala': 'Ponderador', 'Colombia Minors': ''},
         'NSE': {'Panamá': 'NSE', 'México': 'NSE', 'Colombia': 'NSE', 'Ecuador': 'NSE', 'Perú': 'NSE', 'R. Dominicana': 'NSE', 'Honduras': 'NSE', 'El Salvador': 'NSE', 'Guatemala': 'NSE', 'Colombia Minors': 'NSE'},
         'gender': {'Panamá': 'gender', 'México': 'gender', 'Colombia': 'gender', 'Ecuador': 'gender', 'Perú': 'gender', 'R. Dominicana': 'gender', 'Honduras': 'gender', 'El Salvador': 'gender', 'Guatemala': 'gender', 'Colombia Minors': 'gender'},
         'AGErange': {'Panamá': 'AGErange', 'México': 'AGErange', 'Colombia': 'AGErange', 'Ecuador': 'AGErange', 'Perú': 'AGErange', 'R. Dominicana': 'AGErange', 'Honduras': 'AGErange', 'El Salvador': 'AGErange', 'Guatemala': 'AGErange', 'Colombia Minors': 'AGErange'},
         
-        # --- AJUSTE MÉXICO: Reemplazar 'region' por 'Region 2026' ---
-        'Region': {'Panamá': 'Region', 'México': 'Region 2026', 'Colombia': 'region', 'Ecuador': 'region', 'Perú': 'region', 'R. Dominicana': 'region', 'Honduras': 'region', 'El Salvador': 'region', 'Guatemala': 'region', 'Colombia Minors': 'region'},
+        # --- AJUSTE MÉXICO: Reemplazar 'Region 2026' por 'Region' ---
+        'Region': {'Panamá': 'Region', 'México': 'Region', 'Colombia': 'region', 'Ecuador': 'region', 'Perú': 'region', 'R. Dominicana': 'region', 'Honduras': 'region', 'El Salvador': 'region', 'Guatemala': 'region', 'Colombia Minors': 'region'},
         
         'Total_consumo': {'Panamá': 'Total_consumo', 'México': 'Total_consumo', 'Colombia': 'Total_consumo', 'Ecuador': 'Total_consumo', 'Perú': 'Total_consumo', 'R. Dominicana': 'Total_consumo', 'Honduras': 'Total_consumo', 'El Salvador': 'Total_consumo', 'Guatemala': 'Total_consumo', 'Colombia Minors': 'Total_consumo'},
         'Beer': {'Panamá': 'Beer', 'México': 'Beer', 'Colombia': 'Beer', 'Ecuador': 'Beer', 'Perú': 'Beer', 'R. Dominicana': 'Beer', 'Honduras': 'Beer', 'El Salvador': 'Beer', 'Guatemala': 'Beer', 'Colombia Minors': ''},
@@ -569,6 +565,7 @@ if uploaded_file_num is not None and uploaded_file_txt is not None:
     except Exception as e:
         st.error(f"Error during rename: {e}"); st.stop()
 
+    # --- CHEQUEO POST-RENOMBRADO ---
     required_cols_num = ['Unico', 'NSE', 'gender', 'AGErange', 'Region']
     required_cols_txt = ['[auth]', 'NSE', 'NSE2', '[age]', 'Region 1 (Centro/Metro/Oeste)', 'CIUDAD']
     required_cols_txt.append("Por favor, selecciona el rango de edad en el que te encuentras:")
@@ -584,7 +581,8 @@ if uploaded_file_num is not None and uploaded_file_txt is not None:
         if missing_std_cols_txt: st.error(f"Faltan cols en textual: {', '.join(missing_std_cols_txt)}")
         st.stop()
 
-    num_ex = list(dict.fromkeys([c for c in ['Unico', 'lastpage', 'lastpage_Parte2', 'Ponderador', 'NSE', 'gender', 'AGErange', 'Region'] if c in df_numerico_renamed.columns]))
+    # --- Optimización de Carga (Actualizado con Parte 3) ---
+    num_ex = list(dict.fromkeys([c for c in ['Unico', 'lastpage', 'lastpage_Parte2', 'lastpage_Parte3', 'Ponderador', 'NSE', 'gender', 'AGErange', 'Region'] if c in df_numerico_renamed.columns]))
     txt_ex = list(dict.fromkeys([c for c in ['[auth]', 'startdate', "Por favor, selecciona el rango de edad en el que te encuentras:", '[age]', 'NSE', 'NSE2', 'Region 1 (Centro/Metro/Oeste)', 'CIUDAD', 'Region2', '[panelistid]'] if c in df_textual_renamed.columns]))
     df_numerico = df_numerico_renamed[num_ex].copy()
     df_textual = df_textual_renamed[txt_ex].copy()
@@ -608,22 +606,27 @@ if uploaded_file_num is not None and uploaded_file_txt is not None:
         content_v2 += rep.head().to_html(classes='df-style', index=False)
     validation_results.append({'key': key_v2, 'status': status_v2, 'content': content_v2})
 
-    # V3: lastpage
-    key_v3 = "lastpage y lastpage_Parte2"; content_v3 = ""; status_v3 = "Correcto"
-    for col in ['lastpage', 'lastpage_Parte2']:
+    # V3: lastpage (Actualizado con lastpage_Parte3)
+    key_v3 = "lastpage, lastpage_Parte2 y lastpage_Parte3"; content_v3 = ""; status_v3 = "Correcto"
+    for col in ['lastpage', 'lastpage_Parte2', 'lastpage_Parte3']:
         if col in df_numerico.columns:
             vals = df_numerico[col].dropna().unique()
             if len(vals) > 1:
                 status_v3 = "Incorrecto"
-                content_v3 += f"<span class='status-incorrecto-inline'>[Incorrecto]</span> '{col}' tiene varios: {vals}<br>"
-            else: content_v3 += f"'{col}': OK.<br>"
+                content_v3 += f"<span class='status-incorrecto-inline'>[Incorrecto]</span> '{col}' tiene múltiples valores: {vals}<br>"
+            elif len(vals) == 1:
+                content_v3 += f"'{col}': OK (Valor único: {vals[0]})<br>"
+            else:
+                content_v3 += f"'{col}': OK (Columna vacía)<br>"
     validation_results.append({'key': key_v3, 'status': status_v3, 'content': content_v3})
 
     # V4: Periodo
     key_v4 = "Periodo Campo ('startdate')"; content_v4 = ""; status_v4 = "Info"
     try:
         fechas = pd.to_datetime(df_textual['startdate'], errors='coerce').dropna()
-        content_v4 += f"Inicio: {fechas.min()}<br>Fin: {fechas.max()}"
+        if not fechas.empty:
+            content_v4 += f"Inicio: {fechas.min().strftime('%d/%m/%Y %H:%M')}<br>Fin: {fechas.max().strftime('%d/%m/%Y %H:%M')}"
+        else: content_v4 = "No hay fechas válidas."
     except: status_v4 = "Error"; content_v4 = "Error procesando fechas."
     validation_results.append({'key': key_v4, 'status': status_v4, 'content': content_v4})
 
@@ -634,15 +637,15 @@ if uploaded_file_num is not None and uploaded_file_txt is not None:
         col_r_edad = "Por favor, selecciona el rango de edad en el que te encuentras:"
         rep_edad = df_textual.groupby(col_r_edad)['[age]'].agg(['count', 'min', 'max']).reset_index()
         content_v5 += rep_edad.to_html(classes='df-style', index=False)
-    except: content_v5 += "Error en edad.<br>"
+    except: content_v5 += "Error en validación de edad.<br>"
 
     content_v5 += "<hr><h3>5.2: NSE vs NSE2</h3>"
     try:
         rep_nse = pd.crosstab(df_textual['NSE'].fillna('NULO'), df_textual['NSE2'].fillna('NULO'))
         content_v5 += rep_nse.to_html(classes='df-style')
-    except: content_v5 += "Error en NSE.<br>"
+    except: content_v5 += "Error en validación de NSE.<br>"
 
-    # --- AJUSTE V5.3: GEOGRAFÍA (Lógica completa e ilimitada) ---
+    # V5.3: Geografía (Lógica completa e ilimitada + Detección Ciudad Desconocida)
     content_v5 += f"<h3>5.3: Geografía ({pais_seleccionado_display} - Region 1 vs Ciudad/Dpto)</h3>"
     col_reg = 'Region 1 (Centro/Metro/Oeste)'; col_ciu = 'CIUDAD'
     clasif = CLASIFICACIONES_POR_PAIS.get(pais_clave_interna)
@@ -659,18 +662,17 @@ if uploaded_file_num is not None and uploaded_file_txt is not None:
             ciu_str_lower = str(ciu_val).strip().lower()
 
             if ciu_str_lower not in todas_ciudades_validas:
-                err_reg.append({'Fila': idx + 2, 'Region': reg_val, 'Ciudad': ciu_val, 'Error': 'Ciudad no reconocida en diccionario'})
+                err_reg.append({'Fila': idx + 2, 'Region': reg_val, 'Ciudad': ciu_val, 'Error': f"Ciudad no reconocida en el diccionario de {pais_clave_interna}"})
             elif reg_str_lower in clasif_lower_keys:
                 if ciu_str_lower not in clasif_lower_values[reg_str_lower]:
-                    err_reg.append({'Fila': idx + 2, 'Region': reg_val, 'Ciudad': ciu_val, 'Error': f"No pertenece a {reg_val}"})
+                    err_reg.append({'Fila': idx + 2, 'Region': reg_val, 'Ciudad': ciu_val, 'Error': f"Ciudad no pertenece a la región '{clasif_lower_keys[reg_str_lower]}'"})
             else: err_reg.append({'Fila': idx + 2, 'Region': reg_val, 'Ciudad': ciu_val, 'Error': 'Región inválida'})
 
         if not err_reg: content_v5 += "<span class='status-correcto-inline'>[Correcto]</span> Consistente."
         else:
             status_v5 = "Incorrecto"
             df_err = pd.DataFrame(err_reg)
-            content_v5 += f"<span class='status-incorrecto-inline'>[Incorrecto]</span> {len(err_reg)} casos:<br>"
-            content_v5 += df_err.to_html(classes='df-style', index=False) # MUESTRA TODO
+            content_v5 += f"<span class='status-incorrecto-inline'>[Incorrecto]</span> {len(err_reg)} inconsistencias detectadas:<br>" + df_err.to_html(classes='df-style', index=False)
     validation_results.append({'key': key_v5, 'status': status_v5, 'content': content_v5})
 
     # V6: Proveedor
@@ -679,6 +681,7 @@ if uploaded_file_num is not None and uploaded_file_txt is not None:
     if p_col:
         cnt = df_textual[p_col].value_counts().reset_index()
         content_v6 += cnt.to_html(classes='df-style', index=False)
+    else: content_v6 = "Columna no encontrada."
     validation_results.append({'key': key_v6, 'status': status_v6, 'content': content_v6})
 
     # V7: Nulos
@@ -687,7 +690,7 @@ if uploaded_file_num is not None and uploaded_file_txt is not None:
         nulls = df_numerico[c].isnull().sum()
         if nulls > 0:
             status_v7 = "Incorrecto"; content_v7 += f"{c}: {nulls} nulos.<br>"
-    if status_v7 == "Correcto": content_v7 = "Sin nulos."
+    if status_v7 == "Correcto": content_v7 = "No se encontraron nulos demográficos."
     validation_results.append({'key': key_v7, 'status': status_v7, 'content': content_v7})
 
     # V8: Abiertas
@@ -699,7 +702,8 @@ if uploaded_file_num is not None and uploaded_file_txt is not None:
         if not melted.empty:
             df_para_descarga_abiertas = melted.copy()
             df_para_descarga_abiertas.columns = ['ID', 'Pregunta', 'Respuesta']
-            content_v8 = f"Detectadas {len(melted)} respuestas.<br>" + melted.head(10).to_html(classes='df-style', index=False)
+            content_v8 = f"Detectadas {len(melted)} respuestas abiertas.<br>" + melted.head(10).to_html(classes='df-style', index=False)
+    else: content_v8 = "No se encontraron columnas con menciones."
     validation_results.append({'key': key_v8, 'status': status_v8, 'content': content_v8})
 
     # V9: Ponderador
@@ -708,8 +712,9 @@ if uploaded_file_num is not None and uploaded_file_txt is not None:
         suma = pd.to_numeric(df_numerico['Ponderador'], errors='coerce').sum()
         total = len(df_numerico)
         if not np.isclose(suma, total, atol=1e-5):
-            status_v9 = "Incorrecto"; content_v9 = f"Suma: {suma:.2f}, Filas: {total}"
-        else: content_v9 = "Coinciden."
+            status_v9 = "Incorrecto"; content_v9 = f"Suma: {suma:.2f}, Total Filas: {total}"
+        else: content_v9 = f"Coinciden (Suma: {suma:,.0f})."
+    else: content_v9 = "No aplica."
     validation_results.append({'key': key_v9, 'status': status_v9, 'content': content_v9})
 
     # V14: Conteo Demos
@@ -724,24 +729,25 @@ if uploaded_file_num is not None and uploaded_file_txt is not None:
     validation_results.append({'key': key_v14, 'status': status_v14, 'content': content_v14})
 
     # --- RENDERIZADO FINAL ---
-    st.success("Validación terminada.")
+    st.success("Proceso de validación terminado.")
+    
     if not df_para_descarga_abiertas.empty:
         st.markdown("### 🔽 Descargar Reporte de Abiertas")
-        st.download_button(label="Descargar Abiertas (.xlsx)", data=to_excel(df_para_descarga_abiertas), file_name=f'abiertas_{pais_seleccionado_display}.xlsx')
+        st.download_button(label="Descargar Listado de Abiertas (.xlsx)", data=to_excel(df_para_descarga_abiertas), file_name=f'abiertas_{pais_seleccionado_display}.xlsx')
 
     sort_order = {'Correcto': 1, 'Incorrecto': 2, 'Error': 3, 'Info': 4}
     sorted_results = sorted(validation_results, key=lambda v: sort_order.get(v['status'], 5))
 
-    st.subheader("--- RESUMEN ---", divider='violet')
-    c_m = st.columns(4)
-    c_m[0].metric("✅ Correctos", sum(1 for v in sorted_results if v['status'] == 'Correcto'))
-    c_m[1].metric("❌ Incorrectos", sum(1 for v in sorted_results if v['status'] == 'Incorrecto'))
-    c_m[2].metric("⚠️ Errores", sum(1 for v in sorted_results if v['status'] == 'Error'))
-    c_m[3].metric("ℹ️ Reportes", sum(1 for v in sorted_results if v['status'] == 'Info'))
+    st.subheader("--- RESUMEN DE VALIDACIÓN ---", divider='violet')
+    c_res = st.columns(4)
+    c_res[0].metric("✅ Correctos", sum(1 for v in sorted_results if v['status'] == 'Correcto'))
+    c_res[1].metric("❌ Incorrectos", sum(1 for v in sorted_results if v['status'] == 'Incorrecto'))
+    c_res[2].metric("⚠️ Errores", sum(1 for v in sorted_results if v['status'] == 'Error'))
+    c_res[3].metric("ℹ️ Reportes", sum(1 for v in sorted_results if v['status'] == 'Info'))
 
     st.subheader("--- REPORTE DETALLADO ---", divider='violet')
     for v in sorted_results:
         st.markdown(f"""<div class="validation-box status-{v['status'].lower()}"><h3>{v['key']}</h3>{v['content']}</div>""", unsafe_allow_html=True)
 
 elif not uploaded_file_num or not uploaded_file_txt:
-    st.info("Esperando archivos...")
+    st.info("Esperando la carga de los archivos Excel...")
