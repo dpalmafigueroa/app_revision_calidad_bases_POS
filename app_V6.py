@@ -1,5 +1,5 @@
 # --- validador_app.py ---
-# Versión Atlantia 2.33 (Ajuste Mapeo Region MX, Validación Geo Global, Visualización Total y V3 con lastpage_Parte3)
+# Versión Atlantia 2.34 (Mapeo Region 2026 MX, Validación Geo Global, Visualización Total y V3 con lastpage_Parte3)
 
 import streamlit as st
 import pandas as pd
@@ -397,17 +397,14 @@ COLUMN_MAPPING = {
         'Unico': {'Panamá': 'Unico', 'México': 'Unico', 'Colombia': 'Unico', 'Ecuador': 'Unico', 'Perú': 'Unico', 'R. Dominicana': 'Unico', 'Honduras': 'Unico', 'El Salvador': 'Unico', 'Guatemala': 'Unico', 'Colombia Minors': 'id'},
         'lastpage': {'Panamá': 'lastpage', 'México': 'lastpage', 'Colombia': 'lastpage', 'Ecuador': 'lastpage', 'Perú': 'lastpage', 'R. Dominicana': 'lastpage', 'Honduras': 'lastpage', 'El Salvador': 'lastpage', 'Guatemala': 'lastpage', 'Colombia Minors': 'lastpage'},
         'lastpage_Parte2': {'Panamá': 'lastpage_Parte2', 'México': 'lastpage_Parte2', 'Colombia': 'lastpage_Parte2', 'Ecuador': 'lastpage_Parte2', 'Perú': 'lastpage_Parte2', 'R. Dominicana': 'lastpage_Parte2', 'Honduras': 'lastpage_Parte2', 'El Salvador': 'lastpage_Parte2', 'Guatemala': 'lastpage_Parte2', 'Colombia Minors': ''},
-        
-        # --- AJUSTE V3: Agregar lastpage_Parte3 ---
         'lastpage_Parte3': {'Panamá': 'lastpage_Parte3', 'México': 'lastpage_Parte3', 'Colombia': 'lastpage_Parte3', 'Ecuador': 'lastpage_Parte3', 'Perú': 'lastpage_Parte3', 'R. Dominicana': 'lastpage_Parte3', 'Honduras': 'lastpage_Parte3', 'El Salvador': 'lastpage_Parte3', 'Guatemala': 'lastpage_Parte3', 'Colombia Minors': ''},
-        
         'Ponderador': {'Panamá': 'Ponderador', 'México': 'Ponderador', 'Colombia': 'Ponderador', 'Ecuador': 'Ponderador', 'Perú': 'Ponderador', 'R. Dominicana': 'Ponderador', 'Honduras': 'Ponderador', 'El Salvador': 'Ponderador', 'Guatemala': 'Ponderador', 'Colombia Minors': ''},
         'NSE': {'Panamá': 'NSE', 'México': 'NSE', 'Colombia': 'NSE', 'Ecuador': 'NSE', 'Perú': 'NSE', 'R. Dominicana': 'NSE', 'Honduras': 'NSE', 'El Salvador': 'NSE', 'Guatemala': 'NSE', 'Colombia Minors': 'NSE'},
         'gender': {'Panamá': 'gender', 'México': 'gender', 'Colombia': 'gender', 'Ecuador': 'gender', 'Perú': 'gender', 'R. Dominicana': 'gender', 'Honduras': 'gender', 'El Salvador': 'gender', 'Guatemala': 'gender', 'Colombia Minors': 'gender'},
         'AGErange': {'Panamá': 'AGErange', 'México': 'AGErange', 'Colombia': 'AGErange', 'Ecuador': 'AGErange', 'Perú': 'AGErange', 'R. Dominicana': 'AGErange', 'Honduras': 'AGErange', 'El Salvador': 'AGErange', 'Guatemala': 'AGErange', 'Colombia Minors': 'AGErange'},
         
-        # --- AJUSTE MÉXICO: Reemplazar 'Region 2026' por 'Region' ---
-        'Region': {'Panamá': 'Region', 'México': 'Region', 'Colombia': 'region', 'Ecuador': 'region', 'Perú': 'region', 'R. Dominicana': 'region', 'Honduras': 'region', 'El Salvador': 'region', 'Guatemala': 'region', 'Colombia Minors': 'region'},
+        # --- AJUSTE MÉXICO: 'Region' -> 'Region 2026' ---
+        'Region': {'Panamá': 'Region', 'México': 'Region 2026', 'Colombia': 'region', 'Ecuador': 'region', 'Perú': 'region', 'R. Dominicana': 'region', 'Honduras': 'region', 'El Salvador': 'region', 'Guatemala': 'region', 'Colombia Minors': 'region'},
         
         'Total_consumo': {'Panamá': 'Total_consumo', 'México': 'Total_consumo', 'Colombia': 'Total_consumo', 'Ecuador': 'Total_consumo', 'Perú': 'Total_consumo', 'R. Dominicana': 'Total_consumo', 'Honduras': 'Total_consumo', 'El Salvador': 'Total_consumo', 'Guatemala': 'Total_consumo', 'Colombia Minors': 'Total_consumo'},
         'Beer': {'Panamá': 'Beer', 'México': 'Beer', 'Colombia': 'Beer', 'Ecuador': 'Beer', 'Perú': 'Beer', 'R. Dominicana': 'Beer', 'Honduras': 'Beer', 'El Salvador': 'Beer', 'Guatemala': 'Beer', 'Colombia Minors': ''},
@@ -565,7 +562,6 @@ if uploaded_file_num is not None and uploaded_file_txt is not None:
     except Exception as e:
         st.error(f"Error during rename: {e}"); st.stop()
 
-    # --- CHEQUEO POST-RENOMBRADO ---
     required_cols_num = ['Unico', 'NSE', 'gender', 'AGErange', 'Region']
     required_cols_txt = ['[auth]', 'NSE', 'NSE2', '[age]', 'Region 1 (Centro/Metro/Oeste)', 'CIUDAD']
     required_cols_txt.append("Por favor, selecciona el rango de edad en el que te encuentras:")
