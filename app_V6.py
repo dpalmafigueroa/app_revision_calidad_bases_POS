@@ -1,5 +1,5 @@
 # --- validador_app.py ---
-# Versión Atlantia 2.34 (Mapeo Region 2026 MX, Validación Geo Global, Visualización Total y V3 con lastpage_Parte3)
+# Versión Atlantia 2.35 (Mapeo Region MX, Validación Geo Global, Visualización Total y V3 con lastpage_Parte3)
 
 import streamlit as st
 import pandas as pd
@@ -335,7 +335,7 @@ st.markdown("""
 * **Suma Ponderador por demográfico:** Suma `Ponderador` por `NSE`, `gender`, `AGErange`, `Region` y muestra porcentajes.
 * **Volumetría (Numérica):** Valida columnas contra umbrales definidos por país.
 * **Duplicados en IDs:** Verifica que `Unico` (Num) y `[auth]` (Txt) no tengan valores repetidos.
-* **Duplicados [panelistid]:** Reporta (Info) `[panelistid]` (Txt) duplicados y su conteo.
+* **Duplicados [panelistid]:** Reporta (Info) `[panelistid]` (Txt) duplicados y su coneto.
 * **Conteo de Demográficos:** Reporta (Info) conteo y % de `gender`, `AGErange`, `NSE` y `Region`.
 """)
 st.divider()
@@ -403,8 +403,8 @@ COLUMN_MAPPING = {
         'gender': {'Panamá': 'gender', 'México': 'gender', 'Colombia': 'gender', 'Ecuador': 'gender', 'Perú': 'gender', 'R. Dominicana': 'gender', 'Honduras': 'gender', 'El Salvador': 'gender', 'Guatemala': 'gender', 'Colombia Minors': 'gender'},
         'AGErange': {'Panamá': 'AGErange', 'México': 'AGErange', 'Colombia': 'AGErange', 'Ecuador': 'AGErange', 'Perú': 'AGErange', 'R. Dominicana': 'AGErange', 'Honduras': 'AGErange', 'El Salvador': 'AGErange', 'Guatemala': 'AGErange', 'Colombia Minors': 'AGErange'},
         
-        # --- AJUSTE MÉXICO: 'Region' -> 'Region 2026' ---
-        'Region': {'Panamá': 'Region', 'México': 'Region 2026', 'Colombia': 'region', 'Ecuador': 'region', 'Perú': 'region', 'R. Dominicana': 'region', 'Honduras': 'region', 'El Salvador': 'region', 'Guatemala': 'region', 'Colombia Minors': 'region'},
+        # --- AJUSTE MÉXICO: Reemplazar 'Region' por 'Region' (Búsqueda exacta) ---
+        'Region': {'Panamá': 'Region', 'México': 'Region', 'Colombia': 'region', 'Ecuador': 'region', 'Perú': 'region', 'R. Dominicana': 'region', 'Honduras': 'region', 'El Salvador': 'region', 'Guatemala': 'region', 'Colombia Minors': 'region'},
         
         'Total_consumo': {'Panamá': 'Total_consumo', 'México': 'Total_consumo', 'Colombia': 'Total_consumo', 'Ecuador': 'Total_consumo', 'Perú': 'Total_consumo', 'R. Dominicana': 'Total_consumo', 'Honduras': 'Total_consumo', 'El Salvador': 'Total_consumo', 'Guatemala': 'Total_consumo', 'Colombia Minors': 'Total_consumo'},
         'Beer': {'Panamá': 'Beer', 'México': 'Beer', 'Colombia': 'Beer', 'Ecuador': 'Beer', 'Perú': 'Beer', 'R. Dominicana': 'Beer', 'Honduras': 'Beer', 'El Salvador': 'Beer', 'Guatemala': 'Beer', 'Colombia Minors': ''},
@@ -577,7 +577,7 @@ if uploaded_file_num is not None and uploaded_file_txt is not None:
         if missing_std_cols_txt: st.error(f"Faltan cols en textual: {', '.join(missing_std_cols_txt)}")
         st.stop()
 
-    # --- Optimización de Carga (Actualizado con Parte 3) ---
+    # --- Optimización de Carga ---
     num_ex = list(dict.fromkeys([c for c in ['Unico', 'lastpage', 'lastpage_Parte2', 'lastpage_Parte3', 'Ponderador', 'NSE', 'gender', 'AGErange', 'Region'] if c in df_numerico_renamed.columns]))
     txt_ex = list(dict.fromkeys([c for c in ['[auth]', 'startdate', "Por favor, selecciona el rango de edad en el que te encuentras:", '[age]', 'NSE', 'NSE2', 'Region 1 (Centro/Metro/Oeste)', 'CIUDAD', 'Region2', '[panelistid]'] if c in df_textual_renamed.columns]))
     df_numerico = df_numerico_renamed[num_ex].copy()
@@ -602,7 +602,7 @@ if uploaded_file_num is not None and uploaded_file_txt is not None:
         content_v2 += rep.head().to_html(classes='df-style', index=False)
     validation_results.append({'key': key_v2, 'status': status_v2, 'content': content_v2})
 
-    # V3: lastpage (Actualizado con lastpage_Parte3)
+    # V3: lastpage (Actualizado con Parte 3)
     key_v3 = "lastpage, lastpage_Parte2 y lastpage_Parte3"; content_v3 = ""; status_v3 = "Correcto"
     for col in ['lastpage', 'lastpage_Parte2', 'lastpage_Parte3']:
         if col in df_numerico.columns:
@@ -610,10 +610,8 @@ if uploaded_file_num is not None and uploaded_file_txt is not None:
             if len(vals) > 1:
                 status_v3 = "Incorrecto"
                 content_v3 += f"<span class='status-incorrecto-inline'>[Incorrecto]</span> '{col}' tiene múltiples valores: {vals}<br>"
-            elif len(vals) == 1:
-                content_v3 += f"'{col}': OK (Valor único: {vals[0]})<br>"
-            else:
-                content_v3 += f"'{col}': OK (Columna vacía)<br>"
+            elif len(vals) == 1: content_v3 += f"'{col}': OK ({vals[0]})<br>"
+            else: content_v3 += f"'{col}': OK (Vacía)<br>"
     validation_results.append({'key': key_v3, 'status': status_v3, 'content': content_v3})
 
     # V4: Periodo
@@ -633,13 +631,13 @@ if uploaded_file_num is not None and uploaded_file_txt is not None:
         col_r_edad = "Por favor, selecciona el rango de edad en el que te encuentras:"
         rep_edad = df_textual.groupby(col_r_edad)['[age]'].agg(['count', 'min', 'max']).reset_index()
         content_v5 += rep_edad.to_html(classes='df-style', index=False)
-    except: content_v5 += "Error en validación de edad.<br>"
+    except: content_v5 += "Error en edad.<br>"
 
     content_v5 += "<hr><h3>5.2: NSE vs NSE2</h3>"
     try:
         rep_nse = pd.crosstab(df_textual['NSE'].fillna('NULO'), df_textual['NSE2'].fillna('NULO'))
         content_v5 += rep_nse.to_html(classes='df-style')
-    except: content_v5 += "Error en validación de NSE.<br>"
+    except: content_v5 += "Error en NSE.<br>"
 
     # V5.3: Geografía (Lógica completa e ilimitada + Detección Ciudad Desconocida)
     content_v5 += f"<h3>5.3: Geografía ({pais_seleccionado_display} - Region 1 vs Ciudad/Dpto)</h3>"
@@ -677,7 +675,6 @@ if uploaded_file_num is not None and uploaded_file_txt is not None:
     if p_col:
         cnt = df_textual[p_col].value_counts().reset_index()
         content_v6 += cnt.to_html(classes='df-style', index=False)
-    else: content_v6 = "Columna no encontrada."
     validation_results.append({'key': key_v6, 'status': status_v6, 'content': content_v6})
 
     # V7: Nulos
@@ -686,7 +683,7 @@ if uploaded_file_num is not None and uploaded_file_txt is not None:
         nulls = df_numerico[c].isnull().sum()
         if nulls > 0:
             status_v7 = "Incorrecto"; content_v7 += f"{c}: {nulls} nulos.<br>"
-    if status_v7 == "Correcto": content_v7 = "No se encontraron nulos demográficos."
+    if status_v7 == "Correcto": content_v7 = "Sin nulos."
     validation_results.append({'key': key_v7, 'status': status_v7, 'content': content_v7})
 
     # V8: Abiertas
@@ -698,8 +695,7 @@ if uploaded_file_num is not None and uploaded_file_txt is not None:
         if not melted.empty:
             df_para_descarga_abiertas = melted.copy()
             df_para_descarga_abiertas.columns = ['ID', 'Pregunta', 'Respuesta']
-            content_v8 = f"Detectadas {len(melted)} respuestas abiertas.<br>" + melted.head(10).to_html(classes='df-style', index=False)
-    else: content_v8 = "No se encontraron columnas con menciones."
+            content_v8 = f"Detectadas {len(melted)} respuestas.<br>" + melted.head(10).to_html(classes='df-style', index=False)
     validation_results.append({'key': key_v8, 'status': status_v8, 'content': content_v8})
 
     # V9: Ponderador
@@ -708,9 +704,8 @@ if uploaded_file_num is not None and uploaded_file_txt is not None:
         suma = pd.to_numeric(df_numerico['Ponderador'], errors='coerce').sum()
         total = len(df_numerico)
         if not np.isclose(suma, total, atol=1e-5):
-            status_v9 = "Incorrecto"; content_v9 = f"Suma: {suma:.2f}, Total Filas: {total}"
-        else: content_v9 = f"Coinciden (Suma: {suma:,.0f})."
-    else: content_v9 = "No aplica."
+            status_v9 = "Incorrecto"; content_v9 = f"Suma: {suma:.2f}, Filas: {total}"
+        else: content_v9 = "Coinciden."
     validation_results.append({'key': key_v9, 'status': status_v9, 'content': content_v9})
 
     # V14: Conteo Demos
@@ -724,9 +719,8 @@ if uploaded_file_num is not None and uploaded_file_txt is not None:
             content_v14 += f"<b>{col}:</b>" + counts.to_html(classes='df-style', index=False) + "<br>"
     validation_results.append({'key': key_v14, 'status': status_v14, 'content': content_v14})
 
-    # --- RENDERIZADO FINAL ---
-    st.success("Proceso de validación terminado.")
-    
+    # --- Renderizado Final ---
+    st.success("Validación terminada.")
     if not df_para_descarga_abiertas.empty:
         st.markdown("### 🔽 Descargar Reporte de Abiertas")
         st.download_button(label="Descargar Listado de Abiertas (.xlsx)", data=to_excel(df_para_descarga_abiertas), file_name=f'abiertas_{pais_seleccionado_display}.xlsx')
@@ -734,16 +728,16 @@ if uploaded_file_num is not None and uploaded_file_txt is not None:
     sort_order = {'Correcto': 1, 'Incorrecto': 2, 'Error': 3, 'Info': 4}
     sorted_results = sorted(validation_results, key=lambda v: sort_order.get(v['status'], 5))
 
-    st.subheader("--- RESUMEN DE VALIDACIÓN ---", divider='violet')
-    c_res = st.columns(4)
-    c_res[0].metric("✅ Correctos", sum(1 for v in sorted_results if v['status'] == 'Correcto'))
-    c_res[1].metric("❌ Incorrectos", sum(1 for v in sorted_results if v['status'] == 'Incorrecto'))
-    c_res[2].metric("⚠️ Errores", sum(1 for v in sorted_results if v['status'] == 'Error'))
-    c_res[3].metric("ℹ️ Reportes", sum(1 for v in sorted_results if v['status'] == 'Info'))
+    st.subheader("--- RESUMEN ---", divider='violet')
+    c_m = st.columns(4)
+    c_m[0].metric("✅ Correctos", sum(1 for v in sorted_results if v['status'] == 'Correcto'))
+    c_m[1].metric("❌ Incorrectos", sum(1 for v in sorted_results if v['status'] == 'Incorrecto'))
+    c_m[2].metric("⚠️ Errores", sum(1 for v in sorted_results if v['status'] == 'Error'))
+    c_m[3].metric("ℹ️ Reportes", sum(1 for v in sorted_results if v['status'] == 'Info'))
 
     st.subheader("--- REPORTE DETALLADO ---", divider='violet')
     for v in sorted_results:
         st.markdown(f"""<div class="validation-box status-{v['status'].lower()}"><h3>{v['key']}</h3>{v['content']}</div>""", unsafe_allow_html=True)
 
 elif not uploaded_file_num or not uploaded_file_txt:
-    st.info("Esperando la carga de los archivos Excel...")
+    st.info("Esperando archivos...")
