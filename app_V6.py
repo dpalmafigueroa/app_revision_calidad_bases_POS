@@ -327,7 +327,7 @@ st.markdown("### Evaluaciones Realizadas:")
 st.markdown("""
 * **Tamaño:** Compara filas y columnas.
 * **Orden de IDs:** Verifica `Unico` vs `[auth]`.
-* **Unico valor en (lastpage y lastpage2):** Revisa unicidad.
+* **Unico valor en (lastpage, lastpage2 y lastpage3):** Revisa unicidad.
 * **Periodo de Campo:** Muestra fechas de `startdate`.
 * **Agrupaciones:** Rango de edad vs `[age]`, `NSE` vs `NSE2`, Geografía (Región/Ciudad). (Perú incluye validación `region2`).
 * **Origen/Proveedor:** Conteo por proveedor.
@@ -411,6 +411,7 @@ COLUMN_MAPPING = {
         'Unico': {'Panamá': 'Unico', 'México': 'Unico', 'Colombia': 'Unico', 'Ecuador': 'Unico', 'Perú': 'Unico', 'R. Dominicana': 'Unico', 'Honduras': 'Unico', 'El Salvador': 'Unico', 'Guatemala': 'Unico', 'Colombia Minors': 'id'},
         'lastpage': {'Panamá': 'lastpage', 'México': 'lastpage', 'Colombia': 'lastpage', 'Ecuador': 'lastpage', 'Perú': 'lastpage', 'R. Dominicana': 'lastpage', 'Honduras': 'lastpage', 'El Salvador': 'lastpage', 'Guatemala': 'lastpage', 'Colombia Minors': 'lastpage'},
         'lastpage_Parte2': {'Panamá': 'lastpage_Parte2', 'México': 'lastpage_Parte2', 'Colombia': 'lastpage_Parte2', 'Ecuador': 'lastpage_Parte2', 'Perú': 'lastpage_Parte2', 'R. Dominicana': 'lastpage_Parte2', 'Honduras': 'lastpage_Parte2', 'El Salvador': 'lastpage_Parte2', 'Guatemala': 'lastpage_Parte2', 'Colombia Minors': ''},
+        'lastpage_Parte3': {'Panamá': 'lastpage_Parte3', 'México': 'lastpage_Parte3', 'Colombia': 'lastpage_Parte3', 'Ecuador': 'lastpage_Parte3', 'Perú': 'lastpage_Parte3', 'R. Dominicana': 'lastpage_Parte3', 'Honduras': 'lastpage_Parte3', 'El Salvador': 'lastpage_Parte3', 'Guatemala': 'lastpage_Parte3', 'Colombia Minors': ''},
         'Ponderador': {'Panamá': 'Ponderador', 'México': 'Ponderador', 'Colombia': 'Ponderador', 'Ecuador': 'Ponderador', 'Perú': 'Ponderador', 'R. Dominicana': 'Ponderador', 'Honduras': 'Ponderador', 'El Salvador': 'Ponderador', 'Guatemala': 'Ponderador', 'Colombia Minors': ''},
         'NSE': {'Panamá': 'NSE', 'México': 'NSE', 'Colombia': 'NSE', 'Ecuador': 'NSE', 'Perú': 'NSE', 'R. Dominicana': 'NSE', 'Honduras': 'NSE', 'El Salvador': 'NSE', 'Guatemala': 'NSE', 'Colombia Minors': 'NSE'},
         'gender': {'Panamá': 'gender', 'México': 'gender', 'Colombia': 'gender', 'Ecuador': 'gender', 'Perú': 'gender', 'R. Dominicana': 'gender', 'Honduras': 'gender', 'El Salvador': 'gender', 'Guatemala': 'gender', 'Colombia Minors': 'gender'},
@@ -658,7 +659,7 @@ if uploaded_file_num is not None and uploaded_file_txt is not None:
 
 
     # --- Optimización de Carga (ahora usa los DFs renombrados) ---
-    num_cols_base = ['Unico', 'lastpage', 'lastpage_Parte2']
+    num_cols_base = ['Unico', 'lastpage', 'lastpage_Parte2', 'lastpage_Parte3']
     # Columnas textuales con nombre ESTÁNDAR que se usarán
     txt_cols_std = ['[auth]', 'startdate', "Por favor, selecciona el rango de edad en el que te encuentras:", '[age]', 'NSE', 'NSE2', 'Region 1 (Centro/Metro/Oeste)', 'CIUDAD', 'Origen', 'Proveedor', 'Region2', '[panelistid]']
     # Columnas numéricas con nombre ESTÁNDAR que se usarán
@@ -721,7 +722,7 @@ if uploaded_file_num is not None and uploaded_file_txt is not None:
 
 
     # V3: lastpage (Usa df_numerico)
-    key_v3 = "lastpage y lastpage_Parte2"; content_v3 = ""; status_v3 = "Correcto"; cols_v3 = ['lastpage', 'lastpage_Parte2']
+    key_v3 = "lastpage, lastpage_Parte2 y lastpage_Parte3"; content_v3 = ""; status_v3 = "Correcto"; cols_v3 = ['lastpage', 'lastpage_Parte2', 'lastpage_Parte3']
     for col in cols_v3:
         content_v3 += f"<br><b>'{col}':</b><br>";
         if col not in df_numerico.columns:
@@ -740,7 +741,7 @@ if uploaded_file_num is not None and uploaded_file_txt is not None:
             vals_str = ", ".join(map(str, vals)); content_v3 += f"<span class='status-incorrecto-inline'>[Incorrecto]</span> Múltiples valores encontrados: {vals_str}<br>"
     # Si al final no hubo errores ni incorrectos, pero sí info, el estado final es Info
     if status_v3 == "Correcto" and "[INFO]" in content_v3: status_v3 = "Info"
-    elif status_v3 == "Correcto" and not "[INFO]" in content_v3: content_v3 = "<span class'status-correcto-inline'>[Correcto]</span> Ambas columnas ('lastpage', 'lastpage_Parte2' si aplica) tienen un único valor."
+    elif status_v3 == "Correcto" and not "[INFO]" in content_v3: content_v3 = "<span class'status-correcto-inline'>[Correcto]</span> Todas las columnas ('lastpage', 'lastpage_Parte2', 'lastpage_Parte3' si aplican) tienen un único valor."
 
     validation_results.append({'key': key_v3, 'status': status_v3, 'content': content_v3})
 
