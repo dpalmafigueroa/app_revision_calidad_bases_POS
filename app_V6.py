@@ -1,5 +1,5 @@
 # --- validador_app.py ---
-# Versión Atlantia 2.35 (Mapeo Region MX, Validación Geo Global, Visualización Total y V3 con lastpage_Parte3)
+# Versión Atlantia 2.36 (Corrección Mapeo México Region/Origen, lastpage_Parte3 y Geo Total)
 
 import streamlit as st
 import pandas as pd
@@ -20,86 +20,63 @@ def to_excel(df):
     processed_data = output.getvalue()
     return processed_data
 
-# --- NUEVA FUNCIÓN PARA DATAFRAME DE MAPEO (v2.27) ---
+# --- NUEVA FUNCIÓN PARA DATAFRAME DE MAPEO ---
 def create_mapping_dataframe(mapping_dict, paises_list):
-    """
-    Convierte el diccionario anidado COLUMN_MAPPING en un DataFrame plano
-    para su descarga.
-    """
     records = []
-    # Iterar sobre las bases (Numérica, Textual)
     for base_name, mappings in mapping_dict.items():
-        # Iterar sobre las columnas estándar (Unico, [age], etc.)
         for standard_col, country_map in mappings.items():
             record = {
                 'Base': base_name,
                 'Columna Estándar (Usada en código)': standard_col
             }
-            # Iterar sobre la lista de países para mantener el orden
             for pais in paises_list:
-                # Obtener el nombre específico del país; usar '-' si no existe
                 record[pais] = country_map.get(pais, '-')
             records.append(record)
     
-    # Crear DataFrame
     df = pd.DataFrame(records)
-    
-    # Ordenar columnas
     column_order = ['Base', 'Columna Estándar (Usada en código)'] + paises_list
     df = df[column_order]
-    
     return df
 
 # --- FUNCIÓN PARA MANEJAR COLUMNAS DUPLICADAS ---
 def deduplicate_columns(df, operation_name="lectura"):
-    """
-    Renombra columnas duplicadas añadiendo un sufijo numérico (.1, .2, etc.).
-    Asegura que todos los nombres de columnas sean strings.
-    """
     cols = pd.Series(df.columns)
     counts = Counter(cols)
     new_cols = []
     col_counts_so_far = Counter()
-    renamed_info = [] # Para almacenar info de renombrado
+    renamed_info = [] 
 
     for col in cols:
         count = counts[col]
-        original_col_name = col # Guardar nombre original por si acaso
-        # Asegurarse que es string para evitar errores con nombres numéricos
+        original_col_name = col 
         col_str = str(col) 
 
         if count > 1:
             suffix_num = col_counts_so_far[col_str]
-            if suffix_num > 0: # Solo añadir sufijo a partir de la segunda ocurrencia
+            if suffix_num > 0: 
                 new_name = f"{col_str}.{suffix_num}"
                 new_cols.append(new_name)
-                # Registrar info de renombrado solo una vez por nombre original
                 is_already_registered = any(r[0] == original_col_name for r in renamed_info)
                 if not is_already_registered:
                     renamed_info.append((original_col_name, new_name))
             else:
-                new_cols.append(col_str) # La primera se queda igual (como string)
+                new_cols.append(col_str) 
             col_counts_so_far[col_str] += 1
         else:
-            new_cols.append(col_str) # Si no está duplicada, se queda igual (como string)
+            new_cols.append(col_str) 
 
     df.columns = new_cols
-    # Advertir si se renombraron columnas
     if renamed_info:
-        renamed_originals = list(set([str(r[0]) for r in renamed_info])) # Convertir a string para join
+        renamed_originals = list(set([str(r[0]) for r in renamed_info])) 
         st.warning(f"Se detectaron y renombraron columnas duplicadas en el archivo durante la {operation_name}: {', '.join(renamed_originals)}. Se usará la primera ocurrencia para el mapeo.")
     return df
-# --- FIN FUNCIÓN DUPLICADOS ---
-
 
 # --- CSS PERSONALIZADO ---
 atlantia_css = """
 <style>
-     /* Importar fuentes Atlantia */
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
     @import url('https://fonts.googleapis.com/css2?family=Hind:wght@400;500;600&display=swap');
 
-    /* Variables de colores Atlantia (Fijos) */
     :root {
         --atlantia-violet: #6546C3;
         --atlantia-purple: #AA49CA;
@@ -110,7 +87,6 @@ atlantia_css = """
         --atlantia-yellow: #FFB73B;
         --atlantia-orange: #FF9231;
         --atlantia-red: #E61252;
-        /* Colores pastel para validación */
         --validation-correct-bg: #E8F5E9;
         --validation-correct-border: #4CAF50;
         --validation-correct-text: #1B5E20;
@@ -124,12 +100,10 @@ atlantia_css = """
         --validation-error-border: #FF9800;
         --validation-error-text: #E65100;
 
-        /* --- Variables ADAPTATIVAS Claro/Oscuro --- */
-        /* Tema Claro (Por defecto) */
-        --text-color: #0E1117; /* Streamlit's default dark text */
+        --text-color: #0E1117;
         --text-color-subtle: #555;
         --bg-color: #FFFFFF;
-        --secondary-bg-color: #F0F2F6; /* Streamlit's light secondary bg */
+        --secondary-bg-color: #F0F2F6;
         --widget-bg: #FFFFFF;
         --input-border-color: #CCCCCC;
         --table-header-bg: #F0F2F6;
@@ -137,43 +111,36 @@ atlantia_css = """
         --table-border-color: #E0E0E0;
     }
 
-    /* Tema Oscuro (Sobrescribe variables) */
     html[data-theme="dark"] {
-        --text-color: #FAFAFA; /* Streamlit's default light text */
+        --text-color: #FAFAFA;
         --text-color-subtle: #a0a0a0;
-        --bg-color: #0E1117; /* Streamlit's dark bg */
-        --secondary-bg-color: #1c202a; /* Darker secondary bg */
-        --widget-bg: #262730; /* Streamlit's dark widget bg */
+        --bg-color: #0E1117;
+        --secondary-bg-color: #1c202a;
+        --widget-bg: #262730;
         --input-border-color: #555;
         --table-header-bg: #222733;
         --table-row-even-bg: #2a303e;
         --table-border-color: #444;
-
-        /* Ajustar fondos pastel para mejor contraste en oscuro */
         --validation-correct-bg: #1c3d1e;
         --validation-incorrect-bg: #4d1f23;
         --validation-info-bg: #1a3a57;
         --validation-error-bg: #4d3a1e;
-        /* Ajustar texto pastel si es necesario */
         --validation-correct-text: #b8f5b9;
         --validation-incorrect-text: #f7c5c7;
         --validation-info-text: #bce3ff;
         --validation-error-text: #ffe0b3;
     }
 
-    /* Ocultar menú y footer */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
 
-    /* Tipografía base (Usa variable adaptativa) */
     body, * {
         font-family: 'Hind', sans-serif;
         color: var(--text-color);
     }
     .stApp { background-color: var(--bg-color); }
 
-    /* Títulos Atlantia (Color fijo) */
     h1, .main-title, h2, .section-title, h3, .subsection-title {
         font-family: 'Poppins', sans-serif !important;
         font-weight: 700 !important;
@@ -183,7 +150,6 @@ atlantia_css = """
     h2, .section-title { font-size: 20pt !important; }
     h3, .subsection-title { font-size: 16pt !important; }
 
-    /* Labels Atlantia (Color fijo) */
     .stSelectbox label, .stTextInput label, .stTextArea label, .stFileUploader label,
     .indicator-subtitle, .metric-label, .stMetric label, .stExpander summary {
         font-family: 'Hind', sans-serif !important;
@@ -192,7 +158,6 @@ atlantia_css = """
         color: var(--atlantia-violet) !important;
     }
 
-    /* Cuerpo de texto (Usa variable adaptativa) */
     p, .body-text, .stMarkdown, .stText, label, div[data-baseweb="select"] > div, .stAlert * {
         font-family: 'Hind', sans-serif !important;
         font-weight: 400 !important;
@@ -201,66 +166,23 @@ atlantia_css = """
     }
     .stExpander div[data-baseweb="block"] > div { color: var(--text-color) !important; }
 
-    /* Botones */
     .stButton button { font-family: 'Hind', sans-serif !important; font-weight: 600 !important; font-size: 12pt !important; border-radius: 8px !important; }
 
-    /* Inputs y Select (Adaptativo) */
-    .stTextInput > div > div > input,
-    .stTextArea > div > div > textarea,
-    div[data-baseweb="select"] > div {
-        border: 1px solid var(--input-border-color) !important;
-        background-color: var(--widget-bg) !important;
-        color: var(--text-color) !important;
-        border-radius: 8px !important;
-    }
-     .stTextInput > div > div > input:focus,
-     .stTextArea > div > div > textarea:focus {
-         border-color: var(--atlantia-violet) !important;
-         box-shadow: 0 0 0 2px rgba(101, 70, 195, 0.3) !important;
-     }
-
-    /* File Uploader (Adaptativo) */
     .stFileUploader > div > div {
          border: 2px dashed var(--atlantia-violet) !important;
          background-color: var(--secondary-bg-color) !important;
          border-radius: 10px !important;
      }
-     .stFileUploader label span {
-         color: var(--text-color) !important;
-     }
 
-    /* Expander (Adaptativo) */
-    .streamlit-expanderHeader {
-         background-color: var(--secondary-bg-color) !important;
-         border: 1px solid var(--input-border-color) !important;
-         border-radius: 8px !important;
-    }
-    .streamlit-expanderHeader p {
-         color: var(--atlantia-violet) !important;
-    }
-
-    /* Métricas (Adaptativo) */
-    .stMetric {
-         background-color: var(--widget-bg);
-         border: 1px solid var(--input-border-color);
-         border-radius: 8px;
-         padding: 10px 15px;
-     }
-     .stMetric > label { color: var(--atlantia-violet) !important; }
-     .stMetric > div[data-testid="stMetricValue"] { color: var(--text-color) !important; }
-     .stMetric > div[data-testid="stMetricDelta"] { color: var(--text-color-subtle) !important; }
-
-    /* --- ESTILOS DE VALIDACIÓN (Adaptativos) --- */
     .validation-box {
         border: 1px solid var(--input-border-color);
         border-left-width: 5px !important;
         border-radius: 8px; padding: 16px; margin-bottom: 15px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05); line-height: 1.6;
     }
-    .validation-box h3 { border-bottom: 1px solid var(--input-border-color); color: var(--atlantia-violet); } /* Título principal violeta */
+    .validation-box h3 { border-bottom: 1px solid var(--input-border-color); color: var(--atlantia-violet); }
     .validation-box h3.sub-heading { color: var(--text-color-subtle); border-bottom-style: dotted; }
 
-    /* Estados */
     .status-correcto { background-color: var(--validation-correct-bg); border-left-color: var(--validation-correct-border); }
     .status-correcto h3, .status-correcto span, .status-correcto p, .status-correcto li { color: var(--validation-correct-text) !important; }
     .status-correcto-inline { color: var(--validation-correct-text) !important; font-weight: bold; }
@@ -273,31 +195,15 @@ atlantia_css = """
     .status-info h3, .status-info span, .status-info p, .status-info li, .status-info .df-style th, .status-info .df-style td { color: var(--validation-info-text) !important; }
     .status-info-inline { color: var(--validation-info-text) !important; font-weight: bold; }
 
-
     .status-error { background-color: var(--validation-error-bg); border-left-color: var(--validation-error-border); }
     .status-error h3, .status-error span, .status-error p, .status-error li, .status-error .df-style th, .status-error .df-style td { color: var(--validation-error-text) !important; }
     .status-error-inline { color: var(--validation-error-text) !important; font-weight: bold; }
 
-     /* Tablas dentro de validación */
     .df-style { border-collapse: collapse; width: 95%; margin: 10px auto; font-size: 0.9em; }
     .df-style th, .df-style td { border: 1px solid var(--table-border-color); padding: 6px; color: var(--text-color) !important; }
     .df-style th { background-color: var(--table-header-bg); text-align: left; font-weight: bold; }
     .df-style tr:nth-child(even) { background-color: var(--table-row-even-bg); }
-    /* Override para tablas dentro de cajas de estado */
-    .status-incorrecto .df-style th, .status-incorrecto .df-style td { color: var(--validation-incorrect-text) !important; border-color: rgba(183, 28, 28, 0.3); }
-    .status-incorrecto .df-style th { background-color: rgba(183, 28, 28, 0.1); }
-    .status-error .df-style th, .status-error .df-style td { color: var(--validation-error-text) !important; border-color: rgba(230, 81, 0, 0.3); }
-    .status-error .df-style th { background-color: rgba(230, 81, 0, 0.1); }
-    .status-info .df-style th, .status-info .df-style td { color: var(--validation-info-text) !important; border-color: rgba(13, 71, 161, 0.3); }
-    .status-info .df-style th { background-color: rgba(13, 71, 161, 0.1); }
 
-
-    /* Resumen Lista */
-    .summary-list ul { list-style-type: none; padding-left: 0; }
-    .summary-list li { padding: 5px 0; border-bottom: 1px dotted var(--input-border-color); }
-    .summary-list li strong { color: var(--atlantia-violet); }
-
-    /* Header principal */
     .main-header-container { margin-bottom: 2rem; }
     .main-header { text-align: center; padding: 1rem 0; background: linear-gradient(135deg, var(--atlantia-violet) 0%, var(--atlantia-purple) 100%); border-radius: 15px; color: white; }
     .main-header h1 { color: white !important; font-family: 'Poppins', sans-serif !important; font-weight: 700 !important; font-size: 24pt !important; margin-bottom: 0.2rem; }
@@ -335,7 +241,7 @@ st.markdown("""
 * **Suma Ponderador por demográfico:** Suma `Ponderador` por `NSE`, `gender`, `AGErange`, `Region` y muestra porcentajes.
 * **Volumetría (Numérica):** Valida columnas contra umbrales definidos por país.
 * **Duplicados en IDs:** Verifica que `Unico` (Num) y `[auth]` (Txt) no tengan valores repetidos.
-* **Duplicados [panelistid]:** Reporta (Info) `[panelistid]` (Txt) duplicados y su coneto.
+* **Duplicados [panelistid]:** Reporta (Info) `[panelistid]` (Txt) duplicados y su conteo.
 * **Conteo de Demográficos:** Reporta (Info) conteo y % de `gender`, `AGErange`, `NSE` y `Region`.
 """)
 st.divider()
@@ -363,16 +269,7 @@ CLASIFICACIONES_POR_PAIS = {
         'Sur Oriente': ['Chiquimula', 'Jutiapa', 'Jalapa', 'Santa Rosa']
     },
     'El Salvador': {'AMSS': ['San Salvador'],'Centro': ['Cabañas', 'Chalatenango', 'Cuscatlán', 'La Libertad', 'La Paz', 'San Vicente'],'Occidente': ['Ahuachapán', 'Santa Ana', 'Sonsonate'],'Oriente': ['La Union', 'Morazán', 'San Miguel', 'Usulután']},
-    'Costa Rica': {}, 'Puerto Rico': {},
     'Colombia Minors': {'Andes': ['Antioquia', 'Caldas', 'Quindio', 'Risaralda', 'Santander'],'Centro': ['Bogotá', 'Boyacá', 'Casanare', 'Cundinamarca'],'Norte': ['Atlántico', 'Bolívar', 'Cesar', 'Córdoba', 'La Guajira', 'Magdalena', 'Norte de Santader', 'Sucre'], 'Sur': ['Cauca', 'Huila', 'Meta', 'Nariño', 'Tolima', 'Valle de Cauca']}
-}
-
-CLASIFICACIONES_PERU_REGION2 = {
-    'LIMA': ['Lima', 'Callao', 'Ica'],
-    'NORTE': ['La Libertad', 'Lambayeque', 'Piura', 'Cajamarca', 'Áncash', 'Tumbes'],
-    'CENTRO': ['Junín', 'Ayacucho', 'Huancavelica'],
-    'SUR': ['Arequipa', 'Cuzco', 'Puno', 'Tacna', 'Moquegua', 'Apurimac', 'Madre de Dios'],
-    'ORIENTE': ['Loreto', 'Huánuco', 'San Martin', 'Pasco', 'Ucayali', 'Amazonas']
 }
 
 THRESHOLDS_POR_PAIS = {
@@ -403,7 +300,7 @@ COLUMN_MAPPING = {
         'gender': {'Panamá': 'gender', 'México': 'gender', 'Colombia': 'gender', 'Ecuador': 'gender', 'Perú': 'gender', 'R. Dominicana': 'gender', 'Honduras': 'gender', 'El Salvador': 'gender', 'Guatemala': 'gender', 'Colombia Minors': 'gender'},
         'AGErange': {'Panamá': 'AGErange', 'México': 'AGErange', 'Colombia': 'AGErange', 'Ecuador': 'AGErange', 'Perú': 'AGErange', 'R. Dominicana': 'AGErange', 'Honduras': 'AGErange', 'El Salvador': 'AGErange', 'Guatemala': 'AGErange', 'Colombia Minors': 'AGErange'},
         
-        # --- AJUSTE MÉXICO: Reemplazar 'Region' por 'Region' (Búsqueda exacta) ---
+        # --- AJUSTE MÉXICO: 'Region' (Busca 'Region' en numérica) ---
         'Region': {'Panamá': 'Region', 'México': 'Region', 'Colombia': 'region', 'Ecuador': 'region', 'Perú': 'region', 'R. Dominicana': 'region', 'Honduras': 'region', 'El Salvador': 'region', 'Guatemala': 'region', 'Colombia Minors': 'region'},
         
         'Total_consumo': {'Panamá': 'Total_consumo', 'México': 'Total_consumo', 'Colombia': 'Total_consumo', 'Ecuador': 'Total_consumo', 'Perú': 'Total_consumo', 'R. Dominicana': 'Total_consumo', 'Honduras': 'Total_consumo', 'El Salvador': 'Total_consumo', 'Guatemala': 'Total_consumo', 'Colombia Minors': 'Total_consumo'},
@@ -451,8 +348,11 @@ COLUMN_MAPPING = {
         },
         'NSE': {'Panamá': 'NSE', 'México': 'SEL AGRUPADO', 'Colombia': 'NSE', 'Ecuador': 'agrupado ows', 'Perú': 'SEL AGRUPADO', 'R. Dominicana': 'NSE', 'Honduras': 'NSE', 'El Salvador': 'NSE', 'Guatemala': 'NSE Agrupado', 'Colombia Minors': 'SEL AGRUPADO'},
         'NSE2': {'Panamá': 'NSE2', 'México': 'SEL SEPARADO', 'Colombia': 'NSE2', 'Ecuador': 'Clasificación NSE (HIDDEN VARIABLE)PUNTOS: 0', 'Perú': 'SEL SEPARADO', 'R. Dominicana': 'NSE2', 'Honduras': 'NSE2', 'El Salvador': '¿Cuál es el ingreso mensual promedio de su hogar?', 'Guatemala': 'NSE_Parte2', 'Colombia Minors': 'SEL SEPARADO'},
-        'Region 1 (Centro/Metro/Oeste)': {'Panamá': 'Region 1 (Centro/Metro/Oeste)', 'México': 'region', 'Colombia': 'region_Parte2', 'Ecuador': 'Region', 'Perú': 'region', 'R. Dominicana': 'region', 'Honduras': 'Region',
+        
+        # --- AJUSTE MÉXICO: 'Region 1...' (Busca 'Region' en textual) ---
+        'Region 1 (Centro/Metro/Oeste)': {'Panamá': 'Region 1 (Centro/Metro/Oeste)', 'México': 'Region', 'Colombia': 'region_Parte2', 'Ecuador': 'Region', 'Perú': 'region', 'R. Dominicana': 'region', 'Honduras': 'Region',
          'El Salvador': 'REGION', 'Guatemala': 'region', 'Colombia Minors': 'region'},
+        
         'CIUDAD': {'Panamá': 'CIUDAD', 'México': 'Estado donde vive:', 'Colombia': 'Por favor escribe el nombre de la ciudad en la que vives:', 'Ecuador': 'Estado', 'Perú': 'state', 'R. Dominicana': 'state', 'Honduras': 'Estado',
          'El Salvador': 'ESTADO', 'Guatemala': 'state', 'Colombia Minors': 'Departamento:'},
         'Region2': {'Perú': 'region2'},
@@ -475,7 +375,6 @@ with col_dl1:
         df_vol = pd.DataFrame(reglas_vol); df_vol.columns = ['Columna', 'Condición', 'Límite']
         excel_vol = to_excel(df_vol)
         st.download_button(label="Descargar Reglas Volumetría (.xlsx)", data=excel_vol, file_name=f'reglas_volumetria_{pais_seleccionado_display}.xlsx', mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', key='dl_vol')
-    else: st.info(f"No hay regras de volumetría para {pais_seleccionado_display}.")
 with col_dl2:
     reglas_geo = CLASIFICACIONES_POR_PAIS.get(pais_seleccionado_display, {})
     if reglas_geo:
@@ -484,29 +383,21 @@ with col_dl2:
             df_geo = pd.DataFrame(lista_g)
             excel_geo = to_excel(df_geo)
             st.download_button(label="Descargar Reglas Geografía 1 (.xlsx)", data=excel_geo, file_name=f'reglas_geografia_r1_{pais_seleccionado_display}.xlsx', mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', key='dl_geo')
-        else: st.info(f"No hay regras geográficas detalladas para {pais_seleccionado_display}.")
-    else: st.info(f"No hay regras geográficas definidas para {pais_seleccionado_display}.")
-
 with col_dl3:
     if pais_seleccionado_display == 'Perú':
         reglas_geo_r2 = CLASIFICACIONES_PERU_REGION2
-        if reglas_geo_r2:
-            lista_g_r2 = [{'Región 2': r, 'Ciudad/Dpto': c} for r, ciudades in reglas_geo_r2.items() for c in ciudades]
-            df_geo_r2 = pd.DataFrame(lista_g_r2)
-            excel_geo_r2 = to_excel(df_geo_r2)
-            st.download_button(label="Descargar Reglas Geo 2 (Perú)", data=excel_geo_r2, file_name=f'reglas_geografia_r2_Peru.xlsx', mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', key='dl_geo_r2')
-        else: st.info("No hay reglas de Geografía 2 para Perú.")
-    else: st.empty() 
+        lista_g_r2 = [{'Región 2': r, 'Ciudad/Dpto': c} for r, ciudades in reglas_geo_r2.items() for c in ciudades]
+        df_geo_r2 = pd.DataFrame(lista_g_r2)
+        excel_geo_r2 = to_excel(df_geo_r2)
+        st.download_button(label="Descargar Reglas Geo 2 (Perú)", data=excel_geo_r2, file_name=f'reglas_geografia_r2_Peru.xlsx', mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', key='dl_geo_r2')
 
 st.divider()
-
 st.markdown("### Descargar Mapeo de Columnas")
 try:
     df_mapeo = create_mapping_dataframe(COLUMN_MAPPING, paises_disponibles)
     excel_mapeo = to_excel(df_mapeo)
     st.download_button(label="Descargar Mapeo Completo (.xlsx)", data=excel_mapeo, file_name='mapeo_columnas_completo.xlsx', mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', key='dl_mapeo')
-except Exception as e_map:
-    st.error(f"No se pudo generar el archivo de mapeo: {e_map}")
+except Exception as e_map: st.error(f"No se pudo generar el archivo de mapeo: {e_map}")
 
 st.divider()
 
@@ -528,7 +419,6 @@ if uploaded_file_num is not None and uploaded_file_txt is not None:
     try:
         df_numerico_full = pd.read_excel(io.BytesIO(uploaded_file_num.getvalue()))
         df_textual_full = pd.read_excel(io.BytesIO(uploaded_file_txt.getvalue()))
-
         df_numerico_full = deduplicate_columns(df_numerico_full.copy(), operation_name="lectura (Numérico)")
         df_textual_full = deduplicate_columns(df_textual_full.copy(), operation_name="lectura (Textual)")
     except Exception as e: st.error(f"Error al leer o pre-procesar archivos: {e}"); st.stop()
@@ -577,7 +467,6 @@ if uploaded_file_num is not None and uploaded_file_txt is not None:
         if missing_std_cols_txt: st.error(f"Faltan cols en textual: {', '.join(missing_std_cols_txt)}")
         st.stop()
 
-    # --- Optimización de Carga ---
     num_ex = list(dict.fromkeys([c for c in ['Unico', 'lastpage', 'lastpage_Parte2', 'lastpage_Parte3', 'Ponderador', 'NSE', 'gender', 'AGErange', 'Region'] if c in df_numerico_renamed.columns]))
     txt_ex = list(dict.fromkeys([c for c in ['[auth]', 'startdate', "Por favor, selecciona el rango de edad en el que te encuentras:", '[age]', 'NSE', 'NSE2', 'Region 1 (Centro/Metro/Oeste)', 'CIUDAD', 'Region2', '[panelistid]'] if c in df_textual_renamed.columns]))
     df_numerico = df_numerico_renamed[num_ex].copy()
@@ -588,7 +477,7 @@ if uploaded_file_num is not None and uploaded_file_txt is not None:
     fn, cn = df_numerico_full.shape; ft, ct = df_textual_full.shape
     content_v1 += f"- Num: {fn} filas x {cn} columnas<br>- Txt: {ft} filas x {ct} columnas<br><br><b>Comparación:</b><br>"
     if fn == ft and cn == ct: content_v1 += "<span class='status-correcto-inline'>[Correcto]</span> Coinciden."
-    else: status_v1 = "Incorrecto"; content_v1 += "<span class='status-incorrecto-inline'>[Incorrecto]</span> Diferentes.<br>"
+    else: status_v1 = "Incorrecto"; content_v1 += f"<span class='status-incorrecto-inline'>[Incorrecto]</span> Diferentes.<br>"
     validation_results.append({'key': key_v1, 'status': status_v1, 'content': content_v1})
 
     # V2: Orden IDs
@@ -618,9 +507,8 @@ if uploaded_file_num is not None and uploaded_file_txt is not None:
     key_v4 = "Periodo Campo ('startdate')"; content_v4 = ""; status_v4 = "Info"
     try:
         fechas = pd.to_datetime(df_textual['startdate'], errors='coerce').dropna()
-        if not fechas.empty:
-            content_v4 += f"Inicio: {fechas.min().strftime('%d/%m/%Y %H:%M')}<br>Fin: {fechas.max().strftime('%d/%m/%Y %H:%M')}"
-        else: content_v4 = "No hay fechas válidas."
+        if not fechas.empty: content_v4 += f"Inicio: {fechas.min()}<br>Fin: {fechas.max()}"
+        else: content_v4 = "Sin fechas válidas."
     except: status_v4 = "Error"; content_v4 = "Error procesando fechas."
     validation_results.append({'key': key_v4, 'status': status_v4, 'content': content_v4})
 
@@ -669,7 +557,7 @@ if uploaded_file_num is not None and uploaded_file_txt is not None:
             content_v5 += f"<span class='status-incorrecto-inline'>[Incorrecto]</span> {len(err_reg)} inconsistencias detectadas:<br>" + df_err.to_html(classes='df-style', index=False)
     validation_results.append({'key': key_v5, 'status': status_v5, 'content': content_v5})
 
-    # V6: Proveedor
+    # V6: Origen
     key_v6 = "Origen/Proveedor"; content_v6 = ""; status_v6 = "Info"
     p_col = next((c for c in ['Origen', 'Proveedor'] if c in df_textual.columns), None)
     if p_col:
